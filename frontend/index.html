@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Energy Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script>
+        // Mock data for demo functionality
+        const energyData = [
+            { id: 1, name: "User A", generated: 15, consumed: 10, traded: 5 },
+            { id: 2, name: "User B", generated: 20, consumed: 25, traded: -5 },
+            { id: 3, name: "User C", generated: 10, consumed: 5, traded: 5 }
+        ];
+
+        function loadEnergyData() {
+            const tableBody = document.getElementById("energy-table-body");
+            tableBody.innerHTML = "";
+
+            energyData.forEach(user => {
+                const row = `<tr class='bg-white border-b'>
+                    <td class='px-6 py-4'>${user.name}</td>
+                    <td class='px-6 py-4'>${user.generated} kWh</td>
+                    <td class='px-6 py-4'>${user.consumed} kWh</td>
+                    <td class='px-6 py-4'>${user.traded > 0 ? "+" + user.traded : user.traded} kWh</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <header class="bg-blue-600 text-white py-4">
+        <div class="container mx-auto text-center">
+            <h1 class="text-3xl font-bold">Community Energy Tracker</h1>
+            <p class="text-sm">Empowering communities to trade and monitor energy efficiently</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8">
+        <section class="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Energy Trading Overview</h2>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-6 py-4">User</th>
+                        <th class="px-6 py-4">Energy Generated</th>
+                        <th class="px-6 py-4">Energy Consumed</th>
+                        <th class="px-6 py-4">Energy Traded</th>
+                    </tr>
+                </thead>
+                <tbody id="energy-table-body">
+                    <!-- Data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Add Energy Data</h2>
+            <form class="space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium">User Name</label>
+                    <input type="text" id="name" class="w-full border rounded px-4 py-2" placeholder="Enter name">
+                </div>
+                <div>
+                    <label for="generated" class="block text-sm font-medium">Energy Generated (kWh)</label>
+                    <input type="number" id="generated" class="w-full border rounded px-4 py-2" placeholder="Enter generated energy">
+                </div>
+                <div>
+                    <label for="consumed" class="block text-sm font-medium">Energy Consumed (kWh)</label>
+                    <input type="number" id="consumed" class="w-full border rounded px-4 py-2" placeholder="Enter consumed energy">
+                </div>
+                <button type="button" onclick="addEnergyData()" class="bg-blue-600 text-white px-4 py-2 rounded">Add Data</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Community Energy Tracker. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function addEnergyData() {
+            const name = document.getElementById('name').value;
+            const generated = parseInt(document.getElementById('generated').value, 10);
+            const consumed = parseInt(document.getElementById('consumed').value, 10);
+            const traded = generated - consumed;
+
+            if (name && !isNaN(generated) && !isNaN(consumed)) {
+                energyData.push({ id: energyData.length + 1, name, generated, consumed, traded });
+                loadEnergyData();
+                alert('Data added successfully!');
+            } else {
+                alert('Please fill out all fields correctly.');
+            }
+        }
+
+        // Initialize data on load
+        window.onload = loadEnergyData;
+    </script>
+</body>
+</html>
