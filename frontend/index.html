@@ -18,28 +18,33 @@
       color: white;
       text-align: center;
     }
-    .nav {
-      margin: 1rem 0;
+    .community-selector {
+      margin: 1rem auto;
       text-align: center;
     }
-    .nav button {
-      margin: 0.5rem;
-      padding: 0.5rem 1rem;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
+    .community-selector select {
+      padding: 0.5rem;
+      font-size: 1rem;
     }
-    .nav button:hover {
-      background-color: #45a049;
-    }
-    #content {
+    .content-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
       margin: 2rem auto;
-      width: 80%;
+      max-width: 900px;
+    }
+    .sub-window {
+      flex: 1;
       background: white;
       padding: 1rem;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    .total-balance {
+      margin: 2rem auto;
+      text-align: center;
+      font-size: 1.2rem;
+      color: #333;
     }
   </style>
 </head>
@@ -47,35 +52,88 @@
   <header>
     <h1>Community Energy Trade Tracker</h1>
   </header>
-  <div class="nav">
-    <button onclick="showDailyBalances()">View Daily Balances</button>
-    <button onclick="showAnnualBalances()">View Annual Balances</button>
+  <div class="community-selector">
+    <label for="community">Select Community: </label>
+    <select id="community" onchange="updateCommunity()">
+      <option value="Hidalgo">Hidalgo</option>
+      <option value="Shoreline">Shoreline</option>
+    </select>
   </div>
-  <div id="content">
-    <p>Select an option above to display the balances.</p>
+  <div class="content-wrapper">
+    <div class="sub-window" id="daily-balances">
+      <h2>Daily Balances</h2>
+      <ul id="daily-list">
+        <!-- Daily balances will be dynamically populated -->
+      </ul>
+    </div>
+    <div class="sub-window" id="annual-balances">
+      <h2>Annual Balances</h2>
+      <ul id="annual-list">
+        <!-- Annual balances will be dynamically populated -->
+      </ul>
+    </div>
+  </div>
+  <div class="total-balance" id="total-balance">
+    <!-- Total balance will be dynamically displayed -->
   </div>
   <script>
-    function showDailyBalances() {
-      const content = document.getElementById("content");
-      content.innerHTML = `
-        <h2>Daily Balances</h2>
-        <ul>
-          <li>User A: 5 kWh</li>
-          <li>User B: -3 kWh</li>
-          <li>User C: 8 kWh</li>
-        </ul>`;
+    const communities = {
+      Hidalgo: {
+        daily: [
+          { name: "User A", balance: 5 },
+          { name: "User B", balance: -3 },
+          { name: "User C", balance: 8 }
+        ],
+        annual: [
+          { name: "User A", balance: 1800 },
+          { name: "User B", balance: -900 },
+          { name: "User C", balance: 2400 }
+        ]
+      },
+      Shoreline: {
+        daily: [
+          { name: "User X", balance: 10 },
+          { name: "User Y", balance: -2 },
+          { name: "User Z", balance: 6 }
+        ],
+        annual: [
+          { name: "User X", balance: 3650 },
+          { name: "User Y", balance: -730 },
+          { name: "User Z", balance: 2190 }
+        ]
+      }
+    };
+
+    function calculateTotalBalance(balances) {
+      return balances.reduce((sum, user) => sum + user.balance, 0);
     }
-    
-    function showAnnualBalances() {
-      const content = document.getElementById("content");
-      content.innerHTML = `
-        <h2>Annual Balances</h2>
-        <ul>
-          <li>User A: 1800 kWh</li>
-          <li>User B: -900 kWh</li>
-          <li>User C: 2400 kWh</li>
-        </ul>`;
+
+    function updateCommunity() {
+      const community = document.getElementById("community").value;
+      const dailyBalances = communities[community].daily;
+      const annualBalances = communities[community].annual;
+
+      // Update daily balances
+      const dailyList = document.getElementById("daily-list");
+      dailyList.innerHTML = dailyBalances
+        .map(user => `<li>${user.name}: ${user.balance} kWh</li>`)
+        .join("");
+
+      // Update annual balances
+      const annualList = document.getElementById("annual-list");
+      annualList.innerHTML = annualBalances
+        .map(user => `<li>${user.name}: ${user.balance} kWh</li>`)
+        .join("");
+
+      // Update total balance
+      const totalBalance = calculateTotalBalance(dailyBalances);
+      document.getElementById("total-balance").innerHTML = `
+        <strong>Total Daily Balance for ${community}: ${totalBalance} kWh</strong>
+      `;
     }
+
+    // Initialize with the first community
+    document.addEventListener("DOMContentLoaded", updateCommunity);
   </script>
 </body>
 </html>
