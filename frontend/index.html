@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <title>Community Energy Trade Tracker</title>
+  <!-- Chart.js CDN for line graph -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,14 +15,28 @@
       background-color: #f9f9f9;
     }
     header {
-      background-color: #4CAF50;
+      background-color: #00BCD4; /* Cyan */
       padding: 1rem;
       color: white;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .logo {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
     .community-selector {
-      margin: 1rem auto;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .community-selector select {
       padding: 0.5rem;
@@ -33,107 +49,577 @@
       margin: 2rem auto;
       max-width: 900px;
     }
+    .bottom-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin: 2rem auto;
+      max-width: 900px;
+    }
     .sub-window {
       flex: 1;
       background: white;
       padding: 1rem;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       border-radius: 8px;
+      max-width: 440px;
     }
-    .total-balance {
-      margin: 2rem auto;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.5rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f1f1f1;
+      font-weight: bold;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    .date-picker, .year-picker, .month-picker {
+      margin-bottom: 1rem;
       text-align: center;
-      font-size: 1.2rem;
-      color: #333;
+    }
+    .date-picker input, .year-picker input, .month-picker select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    #monthly-graph {
+      max-height: 300px;
+    }
+    .meter-container {
+      margin-top: 1rem;
+    }
+    .meter {
+      width: 100%;
+      height: 20px;
+      background-color: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .meter-fill {
+      height: 100%;
+      background-color: #00BCD4;
+      transition: width 0.5s ease;
+    }
+    .meter-label {
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: #666;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Community Energy Trade Tracker</h1>
+    <div class="header-left">
+      <img src="CET logo 1024x1024.png" alt="CET Logo" class="logo">
+      <h1>Community Energy Trade Tracker</h1>
+    </div>
+    <div class="community-selector">
+      <label for="community">Select Community: </label>
+      <select id="community" onchange="updateCommunity()">
+        <option value="Hidalgo">Hidalgo</option>
+        <option value="Shoreline">Shoreline</option>
+      </select>
+    </div>
   </header>
-  <div class="community-selector">
-    <label for="community">Select Community: </label>
-    <select id="community" onchange="updateCommunity()">
-      <option value="Hidalgo">Hidalgo</option>
-      <option value="Shoreline">Shoreline</option>
-    </select>
-  </div>
   <div class="content-wrapper">
     <div class="sub-window" id="daily-balances">
       <h2>Daily Balances</h2>
-      <ul id="daily-list">
-        <!-- Daily balances will be dynamically populated -->
-      </ul>
+      <div class="date-picker">
+        <label for="daily-date">Select Date: </label>
+        <input type="date" id="daily-date" value="2025-04-17" onchange="updateCommunity()">
+      </div>
+      <table id="daily-table">
+        <thead>
+          <tr>
+            <th>Household</th>
+            <th>Generation (kWh)</th>
+            <th>Use (kWh)</th>
+            <th>Balance (kWh)</th>
+          </tr>
+        </thead>
+        <tbody id="daily-list">
+          <!-- Daily balances will be dynamically populated -->
+        </tbody>
+      </table>
     </div>
     <div class="sub-window" id="annual-balances">
       <h2>Annual Balances</h2>
-      <ul id="annual-list">
-        <!-- Annual balances will be dynamically populated -->
-      </ul>
+      <div class="year-picker">
+        <label for="annual-year">Select Year: </label>
+        <input type="number" id="annual-year" value="2025" min="2024" max="2025" onchange="updateCommunity()">
+      </div>
+      <table id="annual-table">
+        <thead>
+          <tr>
+            <th>Household</th>
+            <th>Generation (kWh)</th>
+            <th>Use (kWh)</th>
+            <th>Balance (kWh)</th>
+          </tr>
+        </thead>
+        <tbody id="annual-list">
+          <!-- Annual balances will be dynamically populated -->
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="total-balance" id="total-balance">
-    <!-- Total balance will be dynamically displayed -->
+  <div class="bottom-wrapper">
+    <div class="sub-window" id="monthly-balances">
+      <h2>Monthly Community Balance</h2>
+      <div class="month-picker">
+        <label for="month-select">Select Month: </label>
+        <select id="month-select" onchange="updateCommunity()">
+          <option value="2025-03">March 2025</option>
+          <option value="2025-04" selected>April 2025</option>
+        </select>
+      </div>
+      <canvas id="monthly-graph"></canvas>
+    </div>
+    <div class="sub-window" id="total-balances">
+      <h2>Total Balances</h2>
+      <div class="meter-container">
+        <div class="meter-label" id="daily-meter-label"></div>
+        <div class="meter">
+          <div class="meter-fill" id="daily-meter-fill"></div>
+        </div>
+      </div>
+      <div class="meter-container">
+        <div class="meter-label" id="monthly-meter-label"></div>
+        <div class="meter">
+          <div class="meter-fill" id="monthly-meter-fill"></div>
+        </div>
+      </div>
+      <div class="meter-container">
+        <div class="meter-label" id="annual-meter-label"></div>
+        <div class="meter">
+          <div class="meter-fill" id="annual-meter-fill"></div>
+        </div>
+      </div>
+    </div>
   </div>
+  <footer>
+    Version 0.2.0
+  </footer>
   <script>
-    const communities = {
+    const households = {
       Hidalgo: {
-        daily: [
-          { name: "User A", balance: 5 },
-          { name: "User B", balance: -3 },
-          { name: "User C", balance: 8 }
-        ],
-        annual: [
-          { name: "User A", balance: 1800 },
-          { name: "User B", balance: -900 },
-          { name: "User C", balance: 2400 }
-        ]
+        "123e4567-e89b-12d3-a456-426614174000": "Smith Family",
+        "987fcdeb-1234-5678-b901-426614174001": "Johnson Household",
+        "456789ab-cdef-1234-5678-426614174002": "Brown Residence"
       },
       Shoreline: {
-        daily: [
-          { name: "User X", balance: 10 },
-          { name: "User Y", balance: -2 },
-          { name: "User Z", balance: 6 }
-        ],
-        annual: [
-          { name: "User X", balance: 3650 },
-          { name: "User Y", balance: -730 },
-          { name: "User Z", balance: 2190 }
-        ]
+        "789abc12-3456-7890-def1-426614174003": "Davis Family",
+        "321fedcb-9876-5432-10ab-426614174004": "Wilson Home",
+        "654321ab-cdef-9876-5432-426614174005": "Taylor Residence"
       }
     };
 
+    const communities = {
+      Hidalgo: {
+        daily: {
+          "2025-03-01": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.3, use: 10.2, balance: 4.1 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 11.9, use: 15.6, balance: -3.7 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 17.8, use: 10.4, balance: 7.4 }
+          },
+          "2025-03-31": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.4, use: 10.3, balance: 4.1 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.0, use: 15.7, balance: -3.7 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 17.9, use: 10.5, balance: 7.4 }
+          },
+          "2025-04-01": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.5, use: 10.0, balance: 4.5 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.0, use: 15.5, balance: -3.5 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.0, use: 10.5, balance: 7.5 }
+          },
+          "2025-04-02": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.7, use: 10.3, balance: 4.4 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.2, use: 15.8, balance: -3.6 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.2, use: 10.7, balance: 7.5 }
+          },
+          "2025-04-03": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.6, use: 10.1, balance: 4.5 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 11.8, use: 15.2, balance: -3.4 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.1, use: 10.6, balance: 7.5 }
+          },
+          "2025-04-04": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.8, use: 10.2, balance: 4.6 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.3, use: 15.9, balance: -3.6 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.3, use: 10.8, balance: 7.5 }
+          },
+          "2025-04-05": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.9, use: 10.4, balance: 4.5 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.1, use: 15.7, balance: -3.6 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.4, use: 10.9, balance: 7.5 }
+          },
+          "2025-04-06": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.4, use: 10.6, balance: 4.0 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 11.9, use: 15.9, balance: -4.0 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.0, use: 11.5, balance: 6.5 }
+          },
+          "2025-04-07": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 15.1, use: 10.0, balance: 5.1 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.4, use: 15.4, balance: -3.0 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.7, use: 10.3, balance: 8.4 }
+          },
+          "2025-04-08": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.6, use: 10.8, balance: 4.2 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.0, use: 16.0, balance: -4.0 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.2, use: 11.0, balance: 7.2 }
+          },
+          "2025-04-09": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 15.0, use: 10.2, balance: 4.8 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.3, use: 15.6, balance: -3.3 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.5, use: 10.7, balance: 7.8 }
+          },
+          "2025-04-10": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.5, use: 10.5, balance: 4.0 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 11.8, use: 15.8, balance: -4.0 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.1, use: 11.2, balance: 6.9 }
+          },
+          "2025-04-11": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 15.2, use: 10.1, balance: 5.1 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.5, use: 15.5, balance: -3.0 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.8, use: 10.4, balance: 8.4 }
+          },
+          "2025-04-12": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.7, use: 10.7, balance: 4.0 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.1, use: 16.1, balance: -4.0 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.3, use: 11.1, balance: 7.2 }
+          },
+          "2025-04-13": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 15.1, use: 10.3, balance: 4.8 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.4, use: 15.7, balance: -3.3 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.6, use: 10.8, balance: 7.8 }
+          },
+          "2025-04-14": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.6, use: 10.4, balance: 4.2 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.0, use: 15.5, balance: -3.5 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.2, use: 10.9, balance: 7.3 }
+          },
+          "2025-04-15": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 15.0, use: 10.1, balance: 4.9 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.7, use: 15.5, balance: -2.8 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.5, use: 10.8, balance: 7.7 }
+          },
+          "2025-04-16": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 14.8, use: 10.5, balance: 4.3 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.5, use: 15.2, balance: -2.7 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.0, use: 11.0, balance: 7 }
+          },
+          "2025-04-17": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 15.2, use: 10.2, balance: 5 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 12.8, use: 15.8, balance: -3 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 18.6, use: 10.6, balance: 8 }
+          }
+        },
+        annual: {
+          "2025": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 5475, use: 3675, balance: 1800 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 4672, use: 5572, balance: -900 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 6789, use: 4389, balance: 2400 }
+          },
+          "2024": {
+            "123e4567-e89b-12d3-a456-426614174000": { generation: 5300, use: 3600, balance: 1700 },
+            "987fcdeb-1234-5678-b901-426614174001": { generation: 4500, use: 5300, balance: -800 },
+            "456789ab-cdef-1234-5678-426614174002": { generation: 6600, use: 4300, balance: 2300 }
+          }
+        }
+      },
+      Shoreline: {
+        daily: {
+          "2025-03-01": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.0, use: 10.4, balance: 9.6 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.3, use: 15.9, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.6, use: 10.6, balance: 6.0 }
+          },
+          "2025-03-31": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.1, use: 10.5, balance: 9.6 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.4, use: 16.0, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.7, use: 10.7, balance: 6.0 }
+          },
+          "2025-04-01": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.0, use: 10.3, balance: 9.7 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.2, use: 15.8, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.5, use: 10.5, balance: 6.0 }
+          },
+          "2025-04-02": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.2, use: 10.4, balance: 9.8 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.3, use: 15.9, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.6, use: 10.6, balance: 6.0 }
+          },
+          "2025-04-03": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.1, use: 10.3, balance: 9.8 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.4, use: 16.0, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.7, use: 10.7, balance: 6.0 }
+          },
+          "2025-04-04": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.3, use: 10.5, balance: 9.8 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.5, use: 16.1, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.8, use: 10.8, balance: 6.0 }
+          },
+          "2025-04-05": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.4, use: 10.6, balance: 9.8 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.6, use: 16.2, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.9, use: 10.9, balance: 6.0 }
+          },
+          "2025-04-06": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 19.9, use: 10.7, balance: 9.2 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.1, use: 16.0, balance: -2.9 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.4, use: 11.0, balance: 5.4 }
+          },
+          "2025-04-07": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.5, use: 10.2, balance: 10.3 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.7, use: 15.7, balance: -2.0 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 17.0, use: 10.5, balance: 6.5 }
+          },
+          "2025-04-08": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.0, use: 10.8, balance: 9.2 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.2, use: 16.2, balance: -3.0 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.5, use: 11.1, balance: 5.4 }
+          },
+          "2025-04-09": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.4, use: 10.3, balance: 10.1 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.6, use: 15.8, balance: -2.2 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.9, use: 10.6, balance: 6.3 }
+          },
+          "2025-04-10": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 19.8, use: 10.9, balance: 8.9 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.0, use: 16.0, balance: -3.0 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.3, use: 11.2, balance: 5.1 }
+          },
+          "2025-04-11": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.6, use: 10.1, balance: 10.5 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.8, use: 15.6, balance: -1.8 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 17.1, use: 10.4, balance: 6.7 }
+          },
+          "2025-04-12": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.1, use: 10.7, balance: 9.4 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.3, use: 16.1, balance: -2.8 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.6, use: 11.0, balance: 5.6 }
+          },
+          "2025-04-13": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.3, use: 10.4, balance: 9.9 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.5, use: 15.9, balance: -2.4 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.8, use: 10.7, balance: 6.1 }
+          },
+          "2025-04-14": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.0, use: 10.6, balance: 9.4 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.2, use: 15.8, balance: -2.6 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.5, use: 10.9, balance: 5.6 }
+          },
+          "2025-04-15": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.3, use: 10.6, balance: 9.7 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.5, use: 15.5, balance: -2.0 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.8, use: 10.8, balance: 6.0 }
+          },
+          "2025-04-16": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 19.8, use: 10.8, balance: 9 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.0, use: 15.0, balance: -2 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.2, use: 11.2, balance: 5 }
+          },
+          "2025-04-17": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 20.5, use: 10.5, balance: 10 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.4, use: 15.4, balance: -2 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 16.7, use: 10.7, balance: 6 }
+          }
+        },
+        annual: {
+          "2025": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 7482, use: 3832, balance: 3650 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 4891, use: 5621, balance: -730 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 6095, use: 3905, balance: 2190 }
+          },
+          "2024": {
+            "789abc12-3456-7890-def1-426614174003": { generation: 7300, use: 3750, balance: 3550 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 4700, use: 5400, balance: -700 },
+            "654321ab-cdef-9876-5432-426614174005": { generation: 5900, use: 3800, balance: 2100 }
+          }
+        }
+      }
+    };
+
+    let monthlyChart = null;
+
     function calculateTotalBalance(balances) {
-      return balances.reduce((sum, user) => sum + user.balance, 0);
+      return Object.values(balances).reduce((sum, data) => sum + data.balance, 0);
+    }
+
+    function calculateMonthlyBalance(community, month, maxDay) {
+      const daysInMonth = Array.from({ length: maxDay }, (_, i) => `${month}-${String(i + 1).padStart(2, "0")}`);
+      return daysInMonth.reduce((sum, date) => {
+        const dailyData = communities[community].daily[date] || {};
+        return sum + calculateTotalBalance(dailyData);
+      }, 0);
+    }
+
+    function updateMeter(value, max, meterFillId, meterLabelId, labelText) {
+      const meterFill = document.getElementById(meterFillId);
+      const meterLabel = document.getElementById(meterLabelId);
+      const normalizedValue = Math.min(Math.max(value / max * 100, -100), 100);
+      const width = Math.abs(normalizedValue);
+      meterFill.style.width = `${width}%`;
+      meterFill.style.backgroundColor = normalizedValue >= 0 ? "#00BCD4" : "#FF5252";
+      meterLabel.textContent = `${labelText}: ${value.toFixed(value >= 100 ? 0 : 1)} kWh`;
     }
 
     function updateCommunity() {
       const community = document.getElementById("community").value;
-      const dailyBalances = communities[community].daily;
-      const annualBalances = communities[community].annual;
+      const selectedDate = document.getElementById("daily-date").value || "2025-04-17";
+      const selectedYear = document.getElementById("annual-year").value || "2025";
+      const selectedMonth = document.getElementById("month-select").value || "2025-04";
+      const monthDays = selectedMonth === "2025-03" ? 31 : 30;
+      const currentDate = "2025-04-17";
+      const maxDay = selectedMonth === "2025-04" ? 17 : monthDays;
 
       // Update daily balances
+      const dailyBalances = communities[community].daily[selectedDate] || communities[community].daily["2025-04-17"];
       const dailyList = document.getElementById("daily-list");
-      dailyList.innerHTML = dailyBalances
-        .map(user => `<li>${user.name}: ${user.balance} kWh</li>`)
+      dailyList.innerHTML = Object.entries(dailyBalances)
+        .map(([uuid, data]) => `
+          <tr>
+            <td>${households[community][uuid]}</td>
+            <td>${data.generation.toFixed(1)}</td>
+            <td>${data.use.toFixed(1)}</td>
+            <td>${data.balance.toFixed(1)}</td>
+          </tr>
+        `)
         .join("");
 
       // Update annual balances
+      const annualBalances = communities[community].annual[selectedYear] || communities[community].annual["2025"];
       const annualList = document.getElementById("annual-list");
-      annualList.innerHTML = annualBalances
-        .map(user => `<li>${user.name}: ${user.balance} kWh</li>`)
+      annualList.innerHTML = Object.entries(annualBalances)
+        .map(([uuid, data]) => `
+          <tr>
+            <td>${households[community][uuid]}</td>
+            <td>${data.generation.toFixed(0)}</td>
+            <td>${data.use.toFixed(0)}</td>
+            <td>${data.balance.toFixed(0)}</td>
+          </tr>
+        `)
         .join("");
 
-      // Update total balance
-      const totalBalance = calculateTotalBalance(dailyBalances);
-      document.getElementById("total-balance").innerHTML = `
-        <strong>Total Daily Balance for ${community}: ${totalBalance} kWh</strong>
-      `;
+      // Update monthly community balance graph
+      const daysInMonth = Array.from({ length: monthDays }, (_, i) => `${selectedMonth}-${String(i + 1).padStart(2, "0")}`);
+      const totalBalances = daysInMonth.map(date => {
+        if (date <= `${selectedMonth}-${String(maxDay).padStart(2, "0")}`) {
+          const dailyData = communities[community].daily[date] || {};
+          return calculateTotalBalance(dailyData);
+        }
+        return null;
+      });
+
+      // Individual household balances
+      const householdBalances = Object.keys(households[community]).map(uuid => ({
+        uuid,
+        name: households[community][uuid],
+        balances: daysInMonth.map(date => {
+          if (date <= `${selectedMonth}-${String(maxDay).padStart(2, "0")}`) {
+            const dailyData = communities[community].daily[date] || {};
+            return dailyData[uuid] ? dailyData[uuid].balance : null;
+          }
+          return null;
+        })
+      }));
+
+      // Colors for individual households
+      const householdColors = {
+        "123e4567-e89b-12d3-a456-426614174000": "#4CAF50", // Green for Smith Family
+        "987fcdeb-1234-5678-b901-426614174001": "#FFC107", // Amber for Johnson Household
+        "456789ab-cdef-1234-5678-426614174002": "#2196F3", // Blue for Brown Residence
+        "789abc12-3456-7890-def1-426614174003": "#4CAF50", // Green for Davis Family
+        "321fedcb-9876-5432-10ab-426614174004": "#FFC107", // Amber for Wilson Home
+        "654321ab-cdef-9876-5432-426614174005": "#2196F3"  // Blue for Taylor Residence
+      };
+
+      const ctx = document.getElementById("monthly-graph").getContext("2d");
+      if (monthlyChart) {
+        monthlyChart.destroy();
+      }
+      monthlyChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: daysInMonth.map(date => date.split("-")[2]),
+          datasets: [
+            ...householdBalances.map(household => ({
+              label: household.name,
+              data: household.balances,
+              borderColor: householdColors[household.uuid],
+              backgroundColor: householdColors[household.uuid] + "33",
+              borderWidth: 1,
+              fill: false,
+              tension: 0.1
+            })),
+            {
+              label: "Total Balance (kWh)",
+              data: totalBalances,
+              borderColor: totalBalances.map(b => b === null ? "#00BCD4" : b >= 0 ? "#00BCD4" : "#FF5252"),
+              backgroundColor: "rgba(0, 188, 212, 0.2)",
+              borderWidth: 3,
+              fill: false,
+              tension: 0.1,
+              segment: {
+                borderColor: ctx => ctx.p0.parsed.y >= 0 && ctx.p1.parsed.y >= 0 ? "#00BCD4" : "#FF5252"
+              }
+            }
+          ]
+        },
+        options: {
+          scales: {
+            x: {
+              title: { display: true, text: `Day of ${selectedMonth === "2025-03" ? "March" : "April"} 2025` }
+            },
+            y: {
+              title: { display: true, text: "Balance (kWh)" },
+              beginAtZero: false,
+              suggestedMin: Math.min(
+                ...totalBalances.filter(b => b !== null),
+                ...householdBalances.flatMap(h => h.balances.filter(b => b !== null))
+              ) - 2,
+              suggestedMax: Math.max(
+                ...totalBalances.filter(b => b !== null),
+                ...householdBalances.flatMap(h => h.balances.filter(b => b !== null))
+              ) + 2
+            }
+          },
+          plugins: {
+            legend: { display: true }
+          }
+        }
+      });
+
+      // Update total balance meters
+      const totalDailyBalance = calculateTotalBalance(dailyBalances);
+      const totalMonthlyBalance = calculateMonthlyBalance(community, selectedMonth, maxDay);
+      const totalAnnualBalance = calculateTotalBalance(annualBalances);
+      updateMeter(totalDailyBalance, 20, "daily-meter-fill", "daily-meter-label", `Total Daily Balance (${selectedDate})`);
+      updateMeter(totalMonthlyBalance, 500, "monthly-meter-fill", "monthly-meter-label", `Total Monthly Balance (${selectedMonth === "2025-03" ? "March" : "April"} 2025)`);
+      updateMeter(totalAnnualBalance, 5000, "annual-meter-fill", "annual-meter-label", `Total Annual Balance (${selectedYear})`);
     }
 
     // Initialize with the first community
-    document.addEventListener("DOMContentLoaded", updateCommunity);
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("daily-date").value = "2025-04-17";
+      document.getElementById("annual-year").value = "2025";
+      document.getElementById("month-select").value = "2025-04";
+      updateCommunity();
+    });
   </script>
 </body>
 </html>
