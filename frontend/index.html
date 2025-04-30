@@ -120,6 +120,18 @@
       font-size: 0.8rem;
       color: #666;
     }
+    #error-message {
+      display: none;
+      color: red;
+      text-align: center;
+      margin: 1rem;
+    }
+    #no-data-message {
+      display: none;
+      color: #666;
+      text-align: center;
+      margin: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -131,11 +143,12 @@
     <div class="community-selector">
       <label for="community">Select Community: </label>
       <select id="community" onchange="updateCommunity()">
-        <option value="Hidalgo">Hidalgo</option>
-        <option value="Shoreline">Shoreline</option>
+        <!-- Populated dynamically -->
       </select>
     </div>
   </header>
+  <div id="error-message"></div>
+  <div id="no-data-message"></div>
   <div class="content-wrapper">
     <div class="sub-window" id="daily-balances">
       <h2>Daily Balances</h2>
@@ -213,9 +226,13 @@
     </div>
   </div>
   <footer>
-    Version 0.2.0
+    Version 0.2.2
   </footer>
   <script>
+    let communities = [];
+    let monthlyChart = null;
+
+    // Hardcoded households (kept as-is)
     const households = {
       Hidalgo: {
         "123e4567-e89b-12d3-a456-426614174000": "Smith Family",
@@ -229,7 +246,8 @@
       }
     };
 
-    const communities = {
+    // Hardcoded balance data (kept as-is)
+    const communitiesData = {
       Hidalgo: {
         daily: {
           "2025-03-01": {
@@ -400,7 +418,7 @@
           },
           "2025-04-10": {
             "789abc12-3456-7890-def1-426614174003": { generation: 19.8, use: 10.9, balance: 8.9 },
-            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.0, use: 16.0, balance: -3.0 },
+            "321fedcb-987 connects-9876-5432-10ab-426614174004": { generation: 13.0, use: 16.0, balance: -3.0 },
             "654321ab-cdef-9876-5432-426614174005": { generation: 16.3, use: 11.2, balance: 5.1 }
           },
           "2025-04-11": {
@@ -454,16 +472,55 @@
       }
     };
 
-    let monthlyChart = null;
+    function showError(message, retryCallback) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.textContent = `${message} `;
+      const retryButton = document.createElement('button');
+      retryButton.textContent = 'Retry';
+      retryButton.onclick = () => {
+        errorDiv.style.display = 'none';
+        retryCallback();
+      };
+      errorDiv.appendChild(retryButton);
+      errorDiv.style.display = 'block';
+    }
+
+    function showNoDataMessage(communityName) {
+      const noDataDiv = document.getElementById('no-data-message');
+      noDataDiv.textContent = `No balance data available for ${communityName}.`;
+      noDataDiv.style.display = 'block';
+    }
+
+    function hideNoDataMessage() {
+      const noDataDiv = document.getElementById('no-data-message');
+      noDataDiv.style.display = 'none';
+    }
+
+    async function fetchCommunities() {
+      try {
+        const response = await fetch('http://localhost:3001/api/communities');
+        if (!response.ok) throw new Error('Failed to fetch communities');
+        communities = await response.json();
+        const communitySelect = document.getElementById('community');
+        communitySelect.innerHTML = communities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      } catch (error) {
+        showError('Error fetching communities: ' + error.message, fetchCommunities);
+      }
+    }
+
+    function getCommunityName(community_id) {
+      const community = communities.find(c => c.id === parseInt(community_id));
+      return community ? community.name : null;
+    }
 
     function calculateTotalBalance(balances) {
       return Object.values(balances).reduce((sum, data) => sum + data.balance, 0);
     }
 
-    function calculateMonthlyBalance(community, month, maxDay) {
+    function calculateMonthlyBalance(communityName, month, maxDay) {
       const daysInMonth = Array.from({ length: maxDay }, (_, i) => `${month}-${String(i + 1).padStart(2, "0")}`);
       return daysInMonth.reduce((sum, date) => {
-        const dailyData = communities[community].daily[date] || {};
+        const dailyData = communitiesData[communityName]?.daily[date] || {};
         return sum + calculateTotalBalance(dailyData);
       }, 0);
     }
@@ -479,21 +536,41 @@
     }
 
     function updateCommunity() {
-      const community = document.getElementById("community").value;
+      const community_id = document.getElementById("community").value;
+      const communityName = getCommunityName(community_id);
       const selectedDate = document.getElementById("daily-date").value || "2025-04-17";
       const selectedYear = document.getElementById("annual-year").value || "2025";
       const selectedMonth = document.getElementById("month-select").value || "2025-04";
       const monthDays = selectedMonth === "2025-03" ? 31 : 30;
-      const currentDate = "2025-04-17";
       const maxDay = selectedMonth === "2025-04" ? 17 : monthDays;
 
-      // Update daily balances
-      const dailyBalances = communities[community].daily[selectedDate] || communities[community].daily["2025-04-17"];
       const dailyList = document.getElementById("daily-list");
+      const annualList = document.getElementById("annual-list");
+      const ctx = document.getElementById("monthly-graph").getContext("2d");
+
+      if (!communityName || !communitiesData[communityName]) {
+        hideNoDataMessage();
+        showNoDataMessage(communityName || `Community ID ${community_id}`);
+        dailyList.innerHTML = '';
+        annualList.innerHTML = '';
+        if (monthlyChart) {
+          monthlyChart.destroy();
+          monthlyChart = null;
+        }
+        updateMeter(0, 20, "daily-meter-fill", "daily-meter-label", `Total Daily Balance (${selectedDate})`);
+        updateMeter(0, 500, "monthly-meter-fill", "monthly-meter-label", `Total Monthly Balance (${selectedMonth === "2025-03" ? "March" : "April"} 2025)`);
+        updateMeter(0, 5000, "annual-meter-fill", "annual-meter-label", `Total Annual Balance (${selectedYear})`);
+        return;
+      }
+
+      hideNoDataMessage();
+
+      // Update daily balances
+      const dailyBalances = communitiesData[communityName].daily[selectedDate] || communitiesData[communityName].daily["2025-04-17"];
       dailyList.innerHTML = Object.entries(dailyBalances)
         .map(([uuid, data]) => `
           <tr>
-            <td>${households[community][uuid]}</td>
+            <td>${households[communityName]?.[uuid] || 'Unknown'}</td>
             <td>${data.generation.toFixed(1)}</td>
             <td>${data.use.toFixed(1)}</td>
             <td>${data.balance.toFixed(1)}</td>
@@ -502,12 +579,11 @@
         .join("");
 
       // Update annual balances
-      const annualBalances = communities[community].annual[selectedYear] || communities[community].annual["2025"];
-      const annualList = document.getElementById("annual-list");
+      const annualBalances = communitiesData[communityName].annual[selectedYear] || communitiesData[communityName].annual["2025"];
       annualList.innerHTML = Object.entries(annualBalances)
         .map(([uuid, data]) => `
           <tr>
-            <td>${households[community][uuid]}</td>
+            <td>${households[communityName]?.[uuid] || 'Unknown'}</td>
             <td>${data.generation.toFixed(0)}</td>
             <td>${data.use.toFixed(0)}</td>
             <td>${data.balance.toFixed(0)}</td>
@@ -519,19 +595,19 @@
       const daysInMonth = Array.from({ length: monthDays }, (_, i) => `${selectedMonth}-${String(i + 1).padStart(2, "0")}`);
       const totalBalances = daysInMonth.map(date => {
         if (date <= `${selectedMonth}-${String(maxDay).padStart(2, "0")}`) {
-          const dailyData = communities[community].daily[date] || {};
+          const dailyData = communitiesData[communityName].daily[date] || {};
           return calculateTotalBalance(dailyData);
         }
         return null;
       });
 
       // Individual household balances
-      const householdBalances = Object.keys(households[community]).map(uuid => ({
+      const householdBalances = Object.keys(households[communityName] || {}).map(uuid => ({
         uuid,
-        name: households[community][uuid],
+        name: households[communityName][uuid],
         balances: daysInMonth.map(date => {
           if (date <= `${selectedMonth}-${String(maxDay).padStart(2, "0")}`) {
-            const dailyData = communities[community].daily[date] || {};
+            const dailyData = communitiesData[communityName].daily[date] || {};
             return dailyData[uuid] ? dailyData[uuid].balance : null;
           }
           return null;
@@ -548,7 +624,6 @@
         "654321ab-cdef-9876-5432-426614174005": "#2196F3"  // Blue for Taylor Residence
       };
 
-      const ctx = document.getElementById("monthly-graph").getContext("2d");
       if (monthlyChart) {
         monthlyChart.destroy();
       }
@@ -560,8 +635,8 @@
             ...householdBalances.map(household => ({
               label: household.name,
               data: household.balances,
-              borderColor: householdColors[household.uuid],
-              backgroundColor: householdColors[household.uuid] + "33",
+              borderColor: householdColors[household.uuid] || '#000000',
+              backgroundColor: (householdColors[household.uuid] || '#000000') + "33",
               borderWidth: 1,
               fill: false,
               tension: 0.1
@@ -606,19 +681,23 @@
 
       // Update total balance meters
       const totalDailyBalance = calculateTotalBalance(dailyBalances);
-      const totalMonthlyBalance = calculateMonthlyBalance(community, selectedMonth, maxDay);
+      const totalMonthlyBalance = calculateMonthlyBalance(communityName, selectedMonth, maxDay);
       const totalAnnualBalance = calculateTotalBalance(annualBalances);
       updateMeter(totalDailyBalance, 20, "daily-meter-fill", "daily-meter-label", `Total Daily Balance (${selectedDate})`);
       updateMeter(totalMonthlyBalance, 500, "monthly-meter-fill", "monthly-meter-label", `Total Monthly Balance (${selectedMonth === "2025-03" ? "March" : "April"} 2025)`);
       updateMeter(totalAnnualBalance, 5000, "annual-meter-fill", "annual-meter-label", `Total Annual Balance (${selectedYear})`);
     }
 
-    // Initialize with the first community
-    document.addEventListener("DOMContentLoaded", () => {
+    // Initialize
+    document.addEventListener("DOMContentLoaded", async () => {
+      await fetchCommunities();
       document.getElementById("daily-date").value = "2025-04-17";
       document.getElementById("annual-year").value = "2025";
       document.getElementById("month-select").value = "2025-04";
-      updateCommunity();
+      if (communities.length > 0) {
+        document.getElementById("community").value = communities.find(c => c.name === "Hidalgo")?.id || communities[0].id;
+        updateCommunity();
+      }
     });
   </script>
 </body>
