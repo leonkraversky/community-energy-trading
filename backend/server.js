@@ -1,26 +1,29 @@
 // backend/server.js
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const app = express();
-const db = new sqlite3.Database(path.join(__dirname, '../database/energy_trades.db'), (err) => {
+const port = 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Connect to SQLite database
+const dbPath = path.join(__dirname, '../database/energy_trades.db');
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Failed to connect to SQLite:', err.message);
-    process.exit(1); // Exit if connection fails
+    console.error('Error connecting to SQLite:', err.message);
   } else {
-    console.log('Successfully connected to SQLite');
+    console.log('Connected to SQLite database.');
   }
 });
 
-// Enable CORS for frontend requests
-app.use(cors({ origin: 'http://localhost:8080' }));
-app.use(express.json());
-
-// Get all communities
+// API to get communities
 app.get('/api/communities', (req, res) => {
-  db.all('SELECT * FROM communities ORDER BY id', [], (err, rows) => {
+  db.all('SELECT * FROM communities', [], (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
@@ -29,10 +32,10 @@ app.get('/api/communities', (req, res) => {
   });
 });
 
-// Get users (households) by community_id
-app.get('/api/users/:community_id', (req, res) => {
-  const { community_id } = req.params;
-  db.all('SELECT uuid, name FROM users WHERE community_id = ? ORDER BY name', [community_id], (err, rows) => {
+// New API to get households by community ID
+app.get('/api/communities/:communityId/households', (req, res) => {
+  const communityId = req.params.communityId;
+  db.all('SELECT uuid, name FROM households WHERE community_id = ?', [communityId], (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
@@ -41,13 +44,7 @@ app.get('/api/users/:community_id', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  db.close();
-  process.exit(0);
+// Start server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });

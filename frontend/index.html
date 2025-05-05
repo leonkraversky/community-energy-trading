@@ -226,25 +226,12 @@
     </div>
   </div>
   <footer>
-    Version 0.2.2
+    Version 0.2.3
   </footer>
   <script>
     let communities = [];
+    let households = {};
     let monthlyChart = null;
-
-    // Hardcoded households (kept as-is)
-    const households = {
-      Hidalgo: {
-        "123e4567-e89b-12d3-a456-426614174000": "Smith Family",
-        "987fcdeb-1234-5678-b901-426614174001": "Johnson Household",
-        "456789ab-cdef-1234-5678-426614174002": "Brown Residence"
-      },
-      Shoreline: {
-        "789abc12-3456-7890-def1-426614174003": "Davis Family",
-        "321fedcb-9876-5432-10ab-426614174004": "Wilson Home",
-        "654321ab-cdef-9876-5432-426614174005": "Taylor Residence"
-      }
-    };
 
     // Hardcoded balance data (kept as-is)
     const communitiesData = {
@@ -418,7 +405,7 @@
           },
           "2025-04-10": {
             "789abc12-3456-7890-def1-426614174003": { generation: 19.8, use: 10.9, balance: 8.9 },
-            "321fedcb-987 connects-9876-5432-10ab-426614174004": { generation: 13.0, use: 16.0, balance: -3.0 },
+            "321fedcb-9876-5432-10ab-426614174004": { generation: 13.0, use: 16.0, balance: -3.0 },
             "654321ab-cdef-9876-5432-426614174005": { generation: 16.3, use: 11.2, balance: 5.1 }
           },
           "2025-04-11": {
@@ -469,8 +456,278 @@
             "654321ab-cdef-9876-5432-426614174005": { generation: 5900, use: 3800, balance: 2100 }
           }
         }
+      },
+    GreenVillage: {
+      daily: {
+        "2025-03-01": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.0, use: 12.0, balance: 3.0 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.5, use: 14.0, balance: -3.5 }
+        },
+        "2025-03-31": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.2, use: 12.1, balance: 3.1 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.6, use: 14.1, balance: -3.5 }
+        },
+        "2025-04-01": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.3, use: 11.9, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.7, use: 13.9, balance: -3.2 }
+        },
+        "2025-04-02": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.3, use: 12.0, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.7, use: 14.0, balance: -3.3 }
+        },
+        "2025-04-03": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.4, use: 12.0, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.8, use: 14.0, balance: -3.2 }
+        },
+        "2025-04-04": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.4, use: 12.1, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.8, use: 14.1, balance: -3.3 }
+        },
+        "2025-04-05": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.5, use: 12.1, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.9, use: 14.1, balance: -3.2 }
+        },
+        "2025-04-06": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.5, use: 12.2, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 10.9, use: 14.2, balance: -3.3 }
+        },
+        "2025-04-07": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.6, use: 12.2, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.0, use: 14.2, balance: -3.2 }
+        },
+        "2025-04-08": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.6, use: 12.3, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.0, use: 14.3, balance: -3.3 }
+        },
+        "2025-04-09": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.7, use: 12.3, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.1, use: 14.3, balance: -3.2 }
+        },
+        "2025-04-10": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.7, use: 12.4, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.1, use: 14.4, balance: -3.3 }
+        },
+        "2025-04-11": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.8, use: 12.4, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.2, use: 14.4, balance: -3.2 }
+        },
+        "2025-04-12": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.8, use: 12.5, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.2, use: 14.5, balance: -3.3 }
+        },
+        "2025-04-13": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.9, use: 12.5, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.3, use: 14.5, balance: -3.2 }
+        },
+        "2025-04-14": {
+          "11111111-1111-1111-1111-111111111111": { generation: 15.9, use: 12.6, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.3, use: 14.6, balance: -3.3 }
+        },
+        "2025-04-15": {
+          "11111111-1111-1111-1111-111111111111": { generation: 16.0, use: 12.6, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.4, use: 14.6, balance: -3.2 }
+        },
+        "2025-04-16": {
+          "11111111-1111-1111-1111-111111111111": { generation: 16.0, use: 12.7, balance: 3.3 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.4, use: 14.7, balance: -3.3 }
+        },
+        "2025-04-17": {
+          "11111111-1111-1111-1111-111111111111": { generation: 16.1, use: 12.7, balance: 3.4 },
+          "22222222-2222-2222-2222-222222222222": { generation: 11.5, use: 14.7, balance: -3.2 }
+        }
+      },
+      annual: {
+        "2025": {
+          "11111111-1111-1111-1111-111111111111": { generation: 5500, use: 4400, balance: 1100 },
+          "22222222-2222-2222-2222-222222222222": { generation: 3800, use: 5100, balance: -1300 }
+        },
+        "2024": {
+          "11111111-1111-1111-1111-111111111111": { generation: 5400, use: 4300, balance: 1100 },
+          "22222222-2222-2222-2222-222222222222": { generation: 3700, use: 5000, balance: -1300 }
+        }
       }
-    };
+    },
+    SolarHamlet: {
+      daily: {
+        "2025-03-01": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.0, use: 11.0, balance: 7.0 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.0, use: 15.0, balance: -3.0 }
+        },
+        "2025-03-31": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.2, use: 11.1, balance: 7.1 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.1, use: 15.1, balance: -3.0 }
+        },
+        "2025-04-01": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.3, use: 10.9, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.2, use: 14.9, balance: -2.7 }
+        },
+        "2025-04-02": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.3, use: 11.0, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.2, use: 15.0, balance: -2.8 }
+        },
+        "2025-04-03": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.4, use: 11.0, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.3, use: 15.0, balance: -2.7 }
+        },
+        "2025-04-04": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.4, use: 11.1, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.3, use: 15.1, balance: -2.8 }
+        },
+        "2025-04-05": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.5, use: 11.1, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.4, use: 15.1, balance: -2.7 }
+        },
+        "2025-04-06": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.5, use: 11.2, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.4, use: 15.2, balance: -2.8 }
+        },
+        "2025-04-07": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.6, use: 11.2, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.5, use: 15.2, balance: -2.7 }
+        },
+        "2025-04-08": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.6, use: 11.3, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.5, use: 15.3, balance: -2.8 }
+        },
+        "2025-04-09": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.7, use: 11.3, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.6, use: 15.3, balance: -2.7 }
+        },
+        "2025-04-10": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.7, use: 11.4, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.6, use: 15.4, balance: -2.8 }
+        },
+        "2025-04-11": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.8, use: 11.4, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.7, use: 15.4, balance: -2.7 }
+        },
+        "2025-04-12": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.8, use: 11.5, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.7, use: 15.5, balance: -2.8 }
+        },
+        "2025-04-13": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.9, use: 11.5, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.8, use: 15.5, balance: -2.7 }
+        },
+        "2025-04-14": {
+          "33333333-3333-3333-3333-333333333333": { generation: 18.9, use: 11.6, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.8, use: 15.6, balance: -2.8 }
+        },
+        "2025-04-15": {
+          "33333333-3333-3333-3333-333333333333": { generation: 19.0, use: 11.6, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.9, use: 15.6, balance: -2.7 }
+        },
+        "2025-04-16": {
+          "33333333-3333-3333-3333-333333333333": { generation: 19.0, use: 11.7, balance: 7.3 },
+          "44444444-4444-4444-4444-444444444444": { generation: 12.9, use: 15.7, balance: -2.8 }
+        },
+        "2025-04-17": {
+          "33333333-3333-3333-3333-333333333333": { generation: 19.1, use: 11.7, balance: 7.4 },
+          "44444444-4444-4444-4444-444444444444": { generation: 13.0, use: 15.7, balance: -2.7 }
+        }
+      },
+      annual: {
+        "2025": {
+          "33333333-3333-3333-3333-333333333333": { generation: 6600, use: 4000, balance: 2600 },
+          "44444444-4444-4444-4444-444444444444": { generation: 4400, use: 5500, balance: -1100 }
+        },
+        "2024": {
+          "33333333-3333-3333-3333-333333333333": { generation: 6500, use: 3900, balance: 2600 },
+          "44444444-4444-4444-4444-444444444444": { generation: 4300, use: 5400, balance: -1100 }
+        }
+      }
+    },
+    EcoTown: {
+      daily: {
+        "2025-03-01": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.0, use: 13.0, balance: 3.0 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.0, use: 14.5, balance: -3.5 }
+        },
+        "2025-03-31": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.2, use: 13.1, balance: 3.1 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.1, use: 14.6, balance: -3.5 }
+        },
+        "2025-04-01": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.3, use: 12.9, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.2, use: 14.4, balance: -3.2 }
+        },
+        "2025-04-02": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.3, use: 13.0, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.2, use: 14.5, balance: -3.3 }
+        },
+        "2025-04-03": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.4, use: 13.0, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.3, use: 14.5, balance: -3.2 }
+        },
+        "2025-04-04": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.4, use: 13.1, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.3, use: 14.6, balance: -3.3 }
+        },
+        "2025-04-05": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.5, use: 13.1, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.4, use: 14.6, balance: -3.2 }
+        },
+        "2025-04-06": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.5, use: 13.2, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.4, use: 14.7, balance: -3.3 }
+        },
+        "2025-04-07": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.6, use: 13.2, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.5, use: 14.7, balance: -3.2 }
+        },
+        "2025-04-08": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.6, use: 13.3, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.5, use: 14.8, balance: -3.3 }
+        },
+        "2025-04-09": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.7, use: 13.3, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.6, use: 14.8, balance: -3.2 }
+        },
+        "2025-04-10": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.7, use: 13.4, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.6, use: 14.9, balance: -3.3 }
+        },
+        "2025-04-11": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.8, use: 13.4, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.7, use: 14.9, balance: -3.2 }
+        },
+        "2025-04-12": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.8, use: 13.5, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.7, use: 15.0, balance: -3.3 }
+        },
+        "2025-04-13": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.9, use: 13.5, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.8, use: 15.0, balance: -3.2 }
+        },
+        "2025-04-14": {
+          "55555555-5555-5555-5555-555555555555": { generation: 16.9, use: 13.6, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.8, use: 15.1, balance: -3.3 }
+        },
+        "2025-04-15": {
+          "55555555-5555-5555-5555-555555555555": { generation: 17.0, use: 13.6, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.9, use: 15.1, balance: -3.2 }
+        },
+        "2025-04-16": {
+          "55555555-5555-5555-5555-555555555555": { generation: 17.0, use: 13.7, balance: 3.3 },
+          "66666666-6666-6666-6666-666666666666": { generation: 11.9, use: 15.2, balance: -3.3 }
+        },
+        "2025-04-17": {
+          "55555555-5555-5555-5555-555555555555": { generation: 17.1, use: 13.7, balance: 3.4 },
+          "66666666-6666-6666-6666-666666666666": { generation: 12.0, use: 15.2, balance: -3.2 }
+        }
+      },
+      annual: {
+        "2025": {
+          "55555555-5555-5555-5555-555555555555": { generation: 5900, use: 4700, balance: 1200 },
+          "66666666-6666-6666-6666-666666666666": { generation: 4000, use: 5300, balance: -1300 }
+        },
+        "2024": {
+          "55555555-5555-5555-5555-555555555555": { generation: 5800, use: 4600, balance: 1200 },
+          "66666666-6666-6666-6666-666666666666": { generation: 3900, use: 5200, balance: -1300 }
+        }
+      }
+    }
+  };
 
     function showError(message, retryCallback) {
       const errorDiv = document.getElementById('error-message');
@@ -508,6 +765,20 @@
       }
     }
 
+    async function fetchHouseholds(communityId) {
+    try {
+      const response = await fetch(`http://localhost:3001/api/communities/${communityId}/households`);
+      if (!response.ok) throw new Error('Failed to fetch households');
+      const householdData = await response.json();
+      households[communityId] = householdData.reduce((map, h) => {
+        map[h.uuid] = h.name;
+        return map;
+      }, {});
+      }   catch (error) {
+        showError('Error fetching households: ' + error.message, () => fetchHouseholds(communityId));
+      }
+    }
+      
     function getCommunityName(community_id) {
       const community = communities.find(c => c.id === parseInt(community_id));
       return community ? community.name : null;
@@ -535,8 +806,11 @@
       meterLabel.textContent = `${labelText}: ${value.toFixed(value >= 100 ? 0 : 1)} kWh`;
     }
 
-    function updateCommunity() {
+    async function updateCommunity() {
       const community_id = document.getElementById("community").value;
+      if (!households[community_id]) {
+        await fetchHouseholds(community_id);
+      }
       const communityName = getCommunityName(community_id);
       const selectedDate = document.getElementById("daily-date").value || "2025-04-17";
       const selectedYear = document.getElementById("annual-year").value || "2025";
@@ -561,68 +835,74 @@
         updateMeter(0, 500, "monthly-meter-fill", "monthly-meter-label", `Total Monthly Balance (${selectedMonth === "2025-03" ? "March" : "April"} 2025)`);
         updateMeter(0, 5000, "annual-meter-fill", "annual-meter-label", `Total Annual Balance (${selectedYear})`);
         return;
+    }
+
+    hideNoDataMessage();
+
+    // Update daily balances
+    const dailyBalances = communitiesData[communityName].daily[selectedDate] || communitiesData[communityName].daily["2025-04-17"];
+    dailyList.innerHTML = Object.entries(dailyBalances)
+      .map(([uuid, data]) => `
+        <tr>
+          <td>${households[community_id]?.[uuid] || 'Unknown'}</td>
+          <td>${data.generation.toFixed(1)}</td>
+          <td>${data.use.toFixed(1)}</td>
+          <td>${data.balance.toFixed(1)}</td>
+        </tr>
+      `)
+      .join("");
+
+    // Update annual balances
+    const annualBalances = communitiesData[communityName].annual[selectedYear] || communitiesData[communityName].annual["2025"];
+    annualList.innerHTML = Object.entries(annualBalances)
+      .map(([uuid, data]) => `
+        <tr>
+          <td>${households[community_id]?.[uuid] || 'Unknown'}</td>
+          <td>${data.generation.toFixed(0)}</td>
+          <td>${data.use.toFixed(0)}</td>
+          <td>${data.balance.toFixed(0)}</td>
+        </tr>
+      `)
+      .join("");
+
+    // Update monthly community balance graph
+    const daysInMonth = Array.from({ length: monthDays }, (_, i) => `${selectedMonth}-${String(i + 1).padStart(2, "0")}`);
+    const totalBalances = daysInMonth.map(date => {
+      if (date <= `${selectedMonth}-${String(maxDay).padStart(2, "0")}`) {
+        const dailyData = communitiesData[communityName].daily[date] || {};
+        return calculateTotalBalance(dailyData);
       }
+      return null;
+    });
 
-      hideNoDataMessage();
-
-      // Update daily balances
-      const dailyBalances = communitiesData[communityName].daily[selectedDate] || communitiesData[communityName].daily["2025-04-17"];
-      dailyList.innerHTML = Object.entries(dailyBalances)
-        .map(([uuid, data]) => `
-          <tr>
-            <td>${households[communityName]?.[uuid] || 'Unknown'}</td>
-            <td>${data.generation.toFixed(1)}</td>
-            <td>${data.use.toFixed(1)}</td>
-            <td>${data.balance.toFixed(1)}</td>
-          </tr>
-        `)
-        .join("");
-
-      // Update annual balances
-      const annualBalances = communitiesData[communityName].annual[selectedYear] || communitiesData[communityName].annual["2025"];
-      annualList.innerHTML = Object.entries(annualBalances)
-        .map(([uuid, data]) => `
-          <tr>
-            <td>${households[communityName]?.[uuid] || 'Unknown'}</td>
-            <td>${data.generation.toFixed(0)}</td>
-            <td>${data.use.toFixed(0)}</td>
-            <td>${data.balance.toFixed(0)}</td>
-          </tr>
-        `)
-        .join("");
-
-      // Update monthly community balance graph
-      const daysInMonth = Array.from({ length: monthDays }, (_, i) => `${selectedMonth}-${String(i + 1).padStart(2, "0")}`);
-      const totalBalances = daysInMonth.map(date => {
+    // Individual household balances
+    const householdBalances = Object.keys(households[community_id] || {}).map(uuid => ({
+      uuid,
+      name: households[community_id][uuid],
+      balances: daysInMonth.map(date => {
         if (date <= `${selectedMonth}-${String(maxDay).padStart(2, "0")}`) {
           const dailyData = communitiesData[communityName].daily[date] || {};
-          return calculateTotalBalance(dailyData);
+          return dailyData[uuid] ? dailyData[uuid].balance : null;
         }
         return null;
-      });
+      })
+    }));
 
-      // Individual household balances
-      const householdBalances = Object.keys(households[communityName] || {}).map(uuid => ({
-        uuid,
-        name: households[communityName][uuid],
-        balances: daysInMonth.map(date => {
-          if (date <= `${selectedMonth}-${String(maxDay).padStart(2, "0")}`) {
-            const dailyData = communitiesData[communityName].daily[date] || {};
-            return dailyData[uuid] ? dailyData[uuid].balance : null;
-          }
-          return null;
-        })
-      }));
-
-      // Colors for individual households
-      const householdColors = {
-        "123e4567-e89b-12d3-a456-426614174000": "#4CAF50", // Green for Smith Family
-        "987fcdeb-1234-5678-b901-426614174001": "#FFC107", // Amber for Johnson Household
-        "456789ab-cdef-1234-5678-426614174002": "#2196F3", // Blue for Brown Residence
-        "789abc12-3456-7890-def1-426614174003": "#4CAF50", // Green for Davis Family
-        "321fedcb-9876-5432-10ab-426614174004": "#FFC107", // Amber for Wilson Home
-        "654321ab-cdef-9876-5432-426614174005": "#2196F3"  // Blue for Taylor Residence
-      };
+    // Update householdColors for new households
+    const householdColors = {
+      "123e4567-e89b-12d3-a456-426614174000": "#4CAF50", // Green for Smith Family
+      "987fcdeb-1234-5678-b901-426614174001": "#FFC107", // Amber for Johnson Household
+      "456789ab-cdef-1234-5678-426614174002": "#2196F3", // Blue for Brown Residence
+      "789abc12-3456-7890-def1-426614174003": "#4CAF50", // Green for Davis Family
+      "321fedcb-9876-5432-10ab-426614174004": "#FFC107", // Amber for Wilson Home
+      "654321ab-cdef-9876-5432-426614174005": "#2196F3", // Blue for Taylor Residence
+      "11111111-1111-1111-1111-111111111111": "#FF5722", // Orange for Clark Household
+      "22222222-2222-2222-2222-222222222222": "#9C27B0", // Purple for Lee Family
+      "33333333-3333-3333-3333-333333333333": "#FF5722", // Orange for Martinez Home
+      "44444444-4444-4444-4444-444444444444": "#9C27B0", // Purple for Nguyen Residence
+      "55555555-5555-5555-5555-555555555555": "#FF5722", // Orange for Patel Family
+      "66666666-6666-6666-6666-666666666666": "#9C27B0"  // Purple for Kim Household
+    };
 
       if (monthlyChart) {
         monthlyChart.destroy();
