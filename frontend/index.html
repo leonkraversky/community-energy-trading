@@ -64,6 +64,12 @@
       border-radius: 8px;
       max-width: 440px;
     }
+    #monthly-balances {
+     flex: 2; /* Makes the Monthly Balance sub-window larger */
+    }
+    #monthly-balances canvas {
+     max-height: 400px; /* Increase the chart height */
+    }      
     table {
       width: 100%;
       border-collapse: collapse;
@@ -93,7 +99,7 @@
     }
     #monthly-graph {
       max-height: 300px;
-    }
+    } 
     .meter-container {
       margin-top: 1rem;
     }
@@ -131,6 +137,17 @@
       color: #666;
       text-align: center;
       margin: 1rem;
+    }
+    #price-date-selector {
+      margin: 1rem 0;
+      text-align: center;
+    }
+    #price-date-selector select {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    canvas {
+      max-height: 300px;
     }
   </style>
 </head>
@@ -170,6 +187,17 @@
         </tbody>
       </table>
     </div>
+    <div class="sub-window" id="monthly-balances">
+      <h2>Monthly Balance</h2>
+      <div class="month-picker">
+        <label for="month-select">Select Month: </label>
+        <select id="month-select" onchange="updateCommunity()">
+          <option value="2025-03">March 2025</option>
+          <option value="2025-04" selected>April 2025</option>
+        </select>
+      </div>
+      <canvas id="monthly-graph"></canvas>
+    </div>    
     <div class="sub-window" id="annual-balances">
       <h2>Annual Balances</h2>
       <div class="year-picker">
@@ -192,16 +220,16 @@
     </div>
   </div>
   <div class="bottom-wrapper">
-    <div class="sub-window" id="monthly-balances">
-      <h2>Monthly Community Balance</h2>
-      <div class="month-picker">
-        <label for="month-select">Select Month: </label>
-        <select id="month-select" onchange="updateCommunity()">
-          <option value="2025-03">March 2025</option>
-          <option value="2025-04" selected>April 2025</option>
+    <div class="sub-window" id="electricity-price">
+      <h2>Electricity Price Chart</h2>
+      <div id="price-date-selector">
+        <label for="price-date">Select Date:</label>
+        <select id="price-date" onchange="fetchElectricityPrices()">
+          <option value="2025-04-16">April 16, 2025</option>
+          <option value="2025-04-17" selected>April 17, 2025</option>
         </select>
       </div>
-      <canvas id="monthly-graph"></canvas>
+      <canvas id="price-chart"></canvas>
     </div>
     <div class="sub-window" id="total-balances">
       <h2>Total Balances</h2>
@@ -226,12 +254,13 @@
     </div>
   </div>
   <footer>
-    Version 0.2.3
+    Version 0.2.4
   </footer>
   <script>
     let communities = [];
     let households = {};
     let monthlyChart = null;
+    let priceChart;
 
     // Hardcoded balance data (kept as-is)
     const communitiesData = {
@@ -887,6 +916,67 @@
         return null;
       })
     }));
+
+    async function fetchElectricityPrices() {
+    const selectedDate = document.getElementById('price-date').value;
+    try {
+      const response = await fetch(`http://localhost:3001/api/electricity-prices/${selectedDate}`);
+      const data = await response.json();
+
+      if (priceChart) {
+        priceChart.destroy();
+      }
+
+      const labels = data.map(entry => entry.time);
+      const prices = data.map(entry => entry.price);
+
+      const ctx = document.getElementById('price-chart').getContext('2d');
+      priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: `Electricity Price on ${selectedDate} ($/kWh)`,
+            data: prices,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 2,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `Electricity Prices on ${selectedDate}`
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Time of Day'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Price ($/kWh)'
+              },
+              min: -0.10 // To accommodate negative prices
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching electricity prices:', error);
+    }
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchElectricityPrices();
+  });
 
     // Update householdColors for new households
     const householdColors = {
