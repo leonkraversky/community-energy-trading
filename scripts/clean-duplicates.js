@@ -1,4 +1,3 @@
-// scripts/clean-duplicates.js
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
@@ -12,35 +11,66 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 db.serialize(() => {
-  // Step 1: Ensure UNIQUE constraint on name
-  console.log('Adding UNIQUE constraint to communities table...');
+  db.run("BEGIN TRANSACTION;", (err) => {
+    if (err) {
+      console.error('Error starting transaction:', err.message);
+      return;
+    }
+    console.log('Transaction started.');
+  });
+
   db.run(`
     CREATE TABLE IF NOT EXISTS communities_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-  `);
+  `, (err) => {
+    if (err) {
+      console.error('Error creating new table:', err.message);
+      db.run("ROLLBACK;");
+      return;
+    }
+    console.log('New table created.');
+  });
 
-  // Step 2: Copy distinct communities (earliest id for each name)
   db.run(`
     INSERT INTO communities_new (id, name, created_at)
     SELECT MIN(id), name, MIN(created_at)
     FROM communities
     GROUP BY name
-  `);
-
-  // Step 3: Drop old table and rename new table
-  db.run(`DROP TABLE communities`);
-  db.run(`ALTER TABLE communities_new RENAME TO communities`);
-
-  // Step 4: Verify the result
-  db.all('SELECT * FROM communities ORDER BY id', [], (err, rows) => {
+  `, (err) => {
     if (err) {
-      console.error('Error querying communities:', err.message);
+      console.error('Error copying distinct communities:', err.message);
+      db.run("ROLLBACK;");
+      return;
+    }
+    console.log('Distinct communities copied.');
+  });
+
+  db.run(`DROP TABLE communities`, (err) => {
+    if (err) {
+      console.error('Error dropping old table:', err.message);
+      db.run("ROLLBACK;");
+      return;
+    }
+    console.log('Old table dropped.');
+  });
+
+  db.run(`ALTER TABLE communities_new RENAME TO communities`, (err) => {
+    if (err) {
+      console.error('Error renaming table:', err.message);
+      db.run("ROLLBACK;");
+      return;
+    }
+    console.log('Table rename successful.');
+  });
+
+  db.run("COMMIT;", (err) => {
+    if (err) {
+      console.error('Error committing transaction:', err.message);
     } else {
-      console.log('Updated communities:');
-      console.table(rows);
+      console.log('Transaction committed.');
     }
   });
 });
